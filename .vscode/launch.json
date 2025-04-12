@@ -10,10 +10,10 @@
             "request": "launch",
             "program": "${file}",
             "console": "integratedTerminal",
-            //"args": ["--output", "C:/Users/Admin/Musique/MusicBee/EmlLib/Playlists","--library", "K:\\Migration\\iTunes stuff\\iTunes Library.xml", , "--music_folder", "K:/HibyMusic/Music"]
-            //"args": ["--output", "C:/Users/Admin/Musique/Bml/Playlists","--library", "I:\\Musique\\iTunes\\iTunes Library.xml", "--music_folder", "I:/Musique/iTunes"]
-            "args": ["--output", "J:/HibyMusic/Playlist/Re","--library", "I:/Musique/iTunes/iTunes Library.xml", "--music_folder", "J:/Music"]
-            //"args": ["--output", "C:/Users/Admin/Musique/Bml/Playlists","--library", "I:/Musique/iTunes/iTunes Library.xml", "--music_folder", "I:/Musique/iTunes", "--absolute"]
+            //"args": ["--output_playlists", "C:/Users/Admin/Musique/MusicBee/EmlLib/Playlists","--library", "K:\\Migration\\iTunes stuff\\iTunes Library.xml", , "--music_folder", "K:/HibyMusic/Music"]
+            //"args": ["--output_playlists", "C:/Users/Admin/Musique/Bml/Playlists","--library", "I:\\Musique\\iTunes\\iTunes Library.xml", "--music_folder", "I:/Musique/iTunes"]
+            "args": ["--output_playlists", "J:/MusicBee/BL/Playlists","--library", "I:/Musique/iTunes/iTunes Library.xml", "--music_folder", "J:/Music"]
+            //"args": ["--output_playlists", "C:/Users/Admin/Musique/Bml/Playlists","--library", "I:/Musique/iTunes/iTunes Library.xml", "--music_folder", "I:/Musique/iTunes", "--absolute"]
         }
     ]
 }
