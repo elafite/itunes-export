@@ -102,7 +102,17 @@ class Library:
                 playlists.append(playlist['Name'])
         return playlists
 
-    def getPlaylist(self, playlistName):
+    def getPlaylistIDs(self, ignoreList=[
+        "Library", "Music", "Movies", "TV Shows", "Purchased", "iTunes DJ", "Podcasts"
+    ]):
+
+        playlists = []
+        for playlist in self.il['Playlists']:
+            if playlist['Name'] not in ignoreList:
+                playlists.append(playlist['Playlist Persistent ID'])
+        return playlists
+    
+    def getPlaylistByName(self, playlistName):
         for playlist in self.il['Playlists']:
             if playlist['Name'] == playlistName:
                 # id 	playlist_id 	track_num 	url 	title 	album 	artist 	length 	uniqueid
@@ -125,6 +135,29 @@ class Library:
                         p.tracks.append(t)
                 return p
 
+    def getPlaylistByID(self, playlistID):
+        for playlist in self.il['Playlists']:
+            if playlist['Playlist Persistent ID'] == playlistID:
+                # id 	playlist_id 	track_num 	url 	title 	album 	artist 	length 	uniqueid
+                p = Playlist(playlist['Name'])
+                p.playlist_id = playlist['Playlist ID']
+                p.is_folder = playlist.get('Folder', False)
+                p.playlist_persistent_id = playlist.get('Playlist Persistent ID')
+                p.parent_persistent_id = playlist.get('Parent Persistent ID')
+                p.distinguished_kind = playlist.get('Distinguished Kind')
+                p.is_genius_playlist = True if playlist.get('Genius Track ID') else False
+                p.is_smart_playlist = True if playlist.get('Smart Info') and not playlist.get('Folder', False) else False
+                tracknum = 1
+                # Make sure playlist was not empty
+                if 'Playlist Items' in playlist:
+                    for track in playlist['Playlist Items']:
+                        id = int(track['Track ID'])
+                        t = self.songs[id]
+                        t.playlist_order = tracknum
+                        tracknum += 1
+                        p.tracks.append(t)
+                return p
+            
     def getPlaylistxspf(self, playlistName):
         global xspfAvailable
         if (xspfAvailable):
