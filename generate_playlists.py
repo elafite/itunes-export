@@ -3,7 +3,8 @@ from libpytunes import Playlist
 from pathlib import Path
 import os
 
-iTunesLibrary = "P:/Musique/Bibliothèque.xml"
+#iTunesLibrary = "P:/Musique/Bibliothèque.xml"
+iTunesLibrary = "F:/Bibliothèque.xml"
 playlistRootPath = Path("F:/Playlists")
 musicFolder = "F:/Music"
 iTunesMediaFolders = ["P:/Musique/iTunes/iTunes Media/iTunes Media/iTunes Music", "P:/Musique/iTunes/iTunes Media/Music", "P:/Musique/iTunes/iTunes Media", "P:/Musique/iTunes/iTunes Music", "P:/Musique/iTunes"]
@@ -55,7 +56,10 @@ def exportPlaylist(playlist: Playlist, parentPath: Path):
                                         playlistContent += track.location + "\n"
 
                 playlistPath = parentPath.joinpath(cleanupPlaylistName(playlist.name) + ".m3u")
-                playlistPath.write_text(playlistContent, encoding="utf8")
+                if len (playlistContent) > 0:
+                        if(not parentPath.exists()):
+                                os.makedirs(parentPath, exist_ok=True)
+                        playlistPath.write_text(playlistContent, encoding="utf8")
 
 
 playlists = {}

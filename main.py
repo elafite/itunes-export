@@ -9,8 +9,14 @@ import plistlib
 import secrets
 import speedcopy
 
+STEP_1 = False
+STEP_2 = True
+STEP_3 = False
+SANITY_CHECK = False
+
 iTunesMusicRootPath = "P:/Musique"
-iTunesLibrary = "P:/Musique/Bibliothèque.xml"
+#iTunesLibrary = "P:/Musique/Bibliothèque.xml"
+iTunesLibrary = "F:/Bibliothèque.xml"
 
 root_folder = "F:"
 iTunesRootFolder = root_folder + "/iTunes"
@@ -65,7 +71,6 @@ def copy_clean(source: Path, destination: Path, lut : dict):
             if folder not in iTunesMusicSubFolders:
                 copy_path = destination.joinpath(folder)
                 if(not copy_path.exists()):
-                    #print (f"Make dir {copy_path}")
                     copy_path.mkdir()
                 copy_clean (source.joinpath(folder), copy_path, lut)
             else:
@@ -86,8 +91,8 @@ def exportPlaylist(playlist: Playlist, parentPath: Path):
     if(playlist.is_folder):
         # Create Folder
         currentPath = parentPath.joinpath(cleanupPlaylistName(playlist.name))
-        if(not currentPath.exists()):
-            currentPath.mkdir()
+        # if(not currentPath.exists()):
+        #     currentPath.mkdir()
         for childPlaylist in playlists.values():
             if(childPlaylist.parent_persistent_id == playlist.playlist_persistent_id):
                 exportPlaylist(childPlaylist, currentPath)
@@ -115,82 +120,89 @@ def exportPlaylist(playlist: Playlist, parentPath: Path):
                     playlistErrors[pln].append(fixed_track_location)
 
         playlistPath = parentPath.joinpath(cleanupPlaylistName(playlist.name) + ".m3u")
-        with open(playlistPath, "w", encoding='utf-8') as f:
-            for link in playlistContent:
-                f.write(str(link) + "\n")
+        if len (playlistContent) > 0:
+            if(not parentPath.exists()):
+                parentPath.makedirs(exist_ok=True)
+            with open(playlistPath, "w", encoding='utf-8') as f:
+                for link in playlistContent:
+                    f.write(str(link) + "\n")
 
 #####################################################################
 #          Copy the music files in a clean structure                #
 #####################################################################
-print(f"\nEtape 1/3 - Copie des fichiers musicaux depuis {iTunesMusicRootPath} vers {musicRootPath}")
 
-musicLookUpTable = {}
+if STEP_1:
+    print(f"\nEtape 1/3 - Copie des fichiers musicaux depuis {iTunesMusicRootPath} vers {musicRootPath}")
 
-copy_clean (Path(iTunesMusicRootPath), Path(musicRootPath), musicLookUpTable)
+    musicLookUpTable = {}
 
-with open("LUT.txt", "w", encoding='utf-8') as f:
-    for key, value in musicLookUpTable.items():
-        f.write(f"{key} => {value}\n")
+    copy_clean (Path(iTunesMusicRootPath), Path(musicRootPath), musicLookUpTable)
 
-print (f"  => table de correspondance sauvegardée dans {os.path.abspath("LUT.txt")}\n")
+    with open("LUT.txt", "w", encoding='utf-8') as f:
+        for key, value in musicLookUpTable.items():
+            f.write(f"{key} => {value}\n")
+
+    print (f"  => table de correspondance sauvegardée dans {os.path.abspath("LUT.txt")}\n")
 #####################################################################
 #       Generate the M3U playlists + folder structure               #
 #####################################################################
-print(f"Etape 2/3 - Exportation des playlists au format .m3u vers {playlistRootPath}")
-playlists = {}
-library = Library(iTunesLibrary)
-playListsLookUpTable = {}
-playlistErrors = {}
-for playlistID in library.getPlaylistIDs(ignoreList=[
-        "Library", "Music", "Movies", "TV Shows", "Purchased", "iTunes DJ", "Podcasts", "Audiobooks", "Downloaded"
-] + ignoreList):
-    playlist = library.getPlaylistByID(playlistID)
-    playlists[playlist.playlist_persistent_id] = playlist
+if STEP_2:
+    print(f"Etape 2/3 - Exportation des playlists au format .m3u vers {playlistRootPath}")
+    playlists = {}
+    library = Library(iTunesLibrary)
+    playListsLookUpTable = {}
+    playlistErrors = {}
+    for playlistID in library.getPlaylistIDs(ignoreList=[
+            "Library", "Music", "Movies", "TV Shows", "Purchased", "iTunes DJ", "Podcasts", "Audiobooks", "Downloaded"
+    ] + ignoreList):
+        playlist = library.getPlaylistByID(playlistID)
+        playlists[playlist.playlist_persistent_id] = playlist
 
-for playlist in playlists.values(): 
-    if(playlist.parent_persistent_id == None) :
-        exportPlaylist(playlist, Path(playlistRootPath))
+    for playlist in playlists.values(): 
+        if(playlist.parent_persistent_id == None) :
+            exportPlaylist(playlist, Path(playlistRootPath))
 
-if len(playlistErrors.keys()) > 0:
-    with open(playlistErrorFile, "w", encoding='utf-8') as f:
-        f.write("************************************************************************\n")
-        f.write("*  Fichiers musicaux non localisés lors de l'exportation des playlists *\n")
-        f.write("************************************************************************\n")
-        for playListName, links in playlistErrors.items():
-            f.write(f"\nPlaylist {playListName}:\n")
-            for link in links:
-                f.write (f"  - {link}\n")
+    if len(playlistErrors.keys()) > 0:
+        with open(playlistErrorFile, "w", encoding='utf-8') as f:
+            f.write("************************************************************************\n")
+            f.write("*  Fichiers musicaux non localisés lors de l'exportation des playlists *\n")
+            f.write("************************************************************************\n")
+            for playListName, links in playlistErrors.items():
+                f.write(f"\nPlaylist {playListName}:\n")
+                for link in links:
+                    f.write (f"  - {link}\n")
 
-    print (f"  => erreurs lors de l'exportation : voir {os.path.abspath(playlistErrorFile)}\n")
+        print (f"  => erreurs lors de l'exportation : voir {os.path.abspath(playlistErrorFile)}\n")
 #####################################################################
 #           Generate the clean iTunes library                       #
 #####################################################################
-print(f"Etape 3/3 - Génération de la bibilothèque iTunes {cleaniTunesLibrary}")
-relativeRootSourceMusic = musicRootPath.split(':',1)[1]
+if STEP_3:
+    print(f"Etape 3/3 - Génération de la bibilothèque iTunes {cleaniTunesLibrary}")
+    relativeRootSourceMusic = musicRootPath.split(':',1)[1]
 
-itemID = 1
-def generate_hex_string():
-    return secrets.token_hex(8).upper()
+    itemID = 1
+    def generate_hex_string():
+        return secrets.token_hex(8).upper()
 
-pl = {}
+    pl = {}
 
-pl['Music Folder'] = "file://localhost/" + musicRootPath
-pl['Library Persistent ID'] = generate_hex_string()
+    pl['Music Folder'] = "file://localhost/" + musicRootPath
+    pl['Library Persistent ID'] = generate_hex_string()
 
-###### Generate the tracks list ##########
-tracks = {}
+    ###### Generate the tracks list ##########
+    tracks = {}
 
-for root, dirs, files in os.walk(musicRootPath):
-   for name in files:
-        track = {}
-        track['Track ID'] = itemID
-        track['Persistent ID'] = generate_hex_string()
-        track['Track Type'] = "File"
-        track['Location'] = "file://localhost/" + os.path.join(root, name).replace("\\", "/")
-        tracks[str(itemID)] = track
-        itemID += 1
+    for root, dirs, files in os.walk(musicRootPath):
+        for name in files:
+                track = {}
+                track['Track ID'] = itemID
+                track['Persistent ID'] = generate_hex_string()
+                track['Track Type'] = "File"
+                track['Location'] = "file://localhost/" + os.path.join(root, name).replace("\\", "/")
+                tracks[str(itemID)] = track
+                itemID += 1
 
-pl['Tracks'] = tracks
+    pl['Tracks'] = tracks
 ##########################################
 
 def get_track_id (file_path):
@@ -255,43 +267,44 @@ with open(cleaniTunesLibrary, "w", encoding='utf-8') as f:
 ###############################################
 #           Sanity check                      #
 ###############################################
-nb_orpheans = 0
-orpheans_music = {}
+if SANITY_CHECK:
+    nb_orpheans = 0
+    orpheans_music = {}
 
-for root, dirs, files in os.walk(musicRootPath):
-   for name in files:
-        filename = Path(os.path.join(root, name))
-        if filename not in playListsLookUpTable.keys() and filename is not None:
-            nb_orpheans += 1
-            folder = Path (root)
-            if folder not in orpheans_music:
-                orpheans_music[folder] = []
-            orpheans_music[folder].append(name)
+    for root, dirs, files in os.walk(musicRootPath):
+        for name in files:
+                filename = Path(os.path.join(root, name))
+                if filename not in playListsLookUpTable.keys() and filename is not None:
+                    nb_orpheans += 1
+                    folder = Path (root)
+                    if folder not in orpheans_music:
+                        orpheans_music[folder] = []
+                    orpheans_music[folder].append(name)
 
-# for root, dirs, files in os.walk(iTunesMusicRootPath):
-#    for name in files:
-#         filename = Path(os.path.join(root, name))
-#         if filename not in LookUpTable.keys() and filename is not None and filename.suffix in extensions:
-#             nb_orpheans += 1
-#             folder = Path (root)
-#             if folder not in orpheans_music:
-#                 orpheans_music[folder] = []
-#             orpheans_music[folder].append(name)
+    # for root, dirs, files in os.walk(iTunesMusicRootPath):
+    #    for name in files:
+    #         filename = Path(os.path.join(root, name))
+    #         if filename not in LookUpTable.keys() and filename is not None and filename.suffix in extensions:
+    #             nb_orpheans += 1
+    #             folder = Path (root)
+    #             if folder not in orpheans_music:
+    #                 orpheans_music[folder] = []
+    #             orpheans_music[folder].append(name)
 
-if len(orpheans_music.keys()) > 0:
-    with open(musicErrorFile, "w", encoding='utf-8') as f:
-        f.write ("************************************************************\n")
-        f.write ("*   Fichiers de musique non répertoriés dans les playlists *\n")
-        f.write ("************************************************************\n")
-        for root, files in orpheans_music.items():
-            f.write (f"\n  Dans {root}:\n")
-            for filename in files:
-                nb_orpheans += 1
-                f.write (f"    - {filename}\n")
+    if len(orpheans_music.keys()) > 0:
+        with open(musicErrorFile, "w", encoding='utf-8') as f:
+            f.write ("************************************************************\n")
+            f.write ("*   Fichiers de musique non répertoriés dans les playlists *\n")
+            f.write ("************************************************************\n")
+            for root, files in orpheans_music.items():
+                f.write (f"\n  Dans {root}:\n")
+                for filename in files:
+                    nb_orpheans += 1
+                    f.write (f"    - {filename}\n")
 
-        f.write(f"\n => Total: {nb_orpheans} fichiers non répertoriés")
+            f.write(f"\n => Total: {nb_orpheans} fichiers non répertoriés")
 
-    
-    print (f"\nVérification: des fichiers musicaux ne sont pas répertoriés, voir {os.path.abspath(musicErrorFile)}\n")
+        
+        print (f"\nVérification: des fichiers musicaux ne sont pas répertoriés, voir {os.path.abspath(musicErrorFile)}\n")
 
 print("\n-------- Exportation terminée --------\n")
