@@ -4,10 +4,10 @@ import secrets
 import os
 from pathlib import Path
 
-rootSourceMusic = "F:/Music"
+rootSourceMusic = "F:/Music2" 
 relativeRootSourceMusic = rootSourceMusic.split(':',1)[1]
-rootSourcePlaylists = "F:/Playlists"
-iTunesLibrary = "F:/iTunes/library.xml"
+rootSourcePlaylists = "F:/Playlists2"
+iTunesLibrary = "F:/iTunes/library2.xml"
 
 itemID = 1
 def generate_hex_string():

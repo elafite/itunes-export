@@ -5,9 +5,10 @@ import os
 
 #iTunesLibrary = "P:/Musique/Bibliothèque.xml"
 iTunesLibrary = "F:/Bibliothèque.xml"
-playlistRootPath = Path("F:/Playlists")
+playlistRootPath = Path("F:/PlaylistsNew")
 musicFolder = "F:/Music"
-iTunesMediaFolders = ["P:/Musique/iTunes/iTunes Media/iTunes Media/iTunes Music", "P:/Musique/iTunes/iTunes Media/Music", "P:/Musique/iTunes/iTunes Media", "P:/Musique/iTunes/iTunes Music", "P:/Musique/iTunes"]
+#iTunesMediaFolders = ["F:/Musique/iTunes/iTunes Media/iTunes Media/iTunes Music", "F:/Musique/iTunes/iTunes Media/Music", "F:/Musique/iTunes/iTunes Media", "F:/Musique/iTunes/iTunes Music", "F:/Musique/iTunes"]
+iTunesMediaFolders = ["F:/Music/iTunes/iTunes Media/iTunes Media/iTunes Music", "F:/Musique/iTunes/iTunes Media/Music", "F:/Musique/iTunes/iTunes Media", "F:/Musique/iTunes/iTunes Music", "F:/Musique/iTunes"]
 ignoreList = []
 exportGeniusPlaylists = False
 exportSmartPlaylists = False

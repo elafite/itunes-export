@@ -14,15 +14,15 @@ STEP_2 = True
 STEP_3 = False
 SANITY_CHECK = False
 
-iTunesMusicRootPath = "P:/Musique"
+iTunesMusicRootPath = "P:/iTunes"
 #iTunesLibrary = "P:/Musique/Bibliothèque.xml"
 iTunesLibrary = "F:/Bibliothèque.xml"
 
 root_folder = "F:"
 iTunesRootFolder = root_folder + "/iTunes"
 musicRootPath = root_folder + "/Music"
-playlistRootPath = root_folder + "/Playlists"
-cleaniTunesLibrary = iTunesRootFolder + "/library.xml"
+playlistRootPath = root_folder + "/Playlists2"
+cleaniTunesLibrary = iTunesRootFolder + "/library2.xml"
 
 if(not Path(iTunesRootFolder).exists()):
     Path(iTunesRootFolder).mkdir()
@@ -57,21 +57,23 @@ def copy_clean(source: Path, destination: Path, lut : dict):
         if file_path_source.suffix in extensions:
             file_path_dest = destination.joinpath(file)
             lut[file_path_source] = file_path_dest
-            if file_path_dest.is_file () is False:
-                #print (f"  copie de \"{file_path_source}\" vers \"{file_path_dest}\"")
-                try:
-                    shutil.copy2 (file_path_source, file_path_dest)
-                    #speedcopy.copyfile(file_path_source, file_path_dest)
-                except:
-                    print (f"  /!\\ Erreur pendant la copie de {file_path_source} vers {file_path_dest}")
+            if STEP_1:
+                if file_path_dest.is_file () is False:
+                    #print (f"  copie de \"{file_path_source}\" vers \"{file_path_dest}\"")
+                    try:
+                        shutil.copy2 (file_path_source, file_path_dest)
+                        #speedcopy.copyfile(file_path_source, file_path_dest)
+                    except:
+                        print (f"  /!\\ Erreur pendant la copie de {file_path_source} vers {file_path_dest}")
 
     folders = [d for d in os.listdir(source) if os.path.isdir(os.path.join(source, d))]
     for folder in folders:
         if folder not in ignoreFolders:
             if folder not in iTunesMusicSubFolders:
                 copy_path = destination.joinpath(folder)
-                if(not copy_path.exists()):
-                    copy_path.mkdir()
+                if STEP_1:
+                    if(not copy_path.exists()):
+                        copy_path.mkdir()
                 copy_clean (source.joinpath(folder), copy_path, lut)
             else:
                 copy_clean (source.joinpath(folder), Path(musicRootPath), lut)
@@ -131,18 +133,19 @@ def exportPlaylist(playlist: Playlist, parentPath: Path):
 #          Copy the music files in a clean structure                #
 #####################################################################
 
+print(f"\nEtape 1/3 - Copie des fichiers musicaux depuis {iTunesMusicRootPath} vers {musicRootPath}")
+
+musicLookUpTable = {}
+copy_clean (Path(iTunesMusicRootPath), Path(musicRootPath), musicLookUpTable)
+
 if STEP_1:
-    print(f"\nEtape 1/3 - Copie des fichiers musicaux depuis {iTunesMusicRootPath} vers {musicRootPath}")
-
-    musicLookUpTable = {}
-
-    copy_clean (Path(iTunesMusicRootPath), Path(musicRootPath), musicLookUpTable)
-
     with open("LUT.txt", "w", encoding='utf-8') as f:
         for key, value in musicLookUpTable.items():
             f.write(f"{key} => {value}\n")
 
     print (f"  => table de correspondance sauvegardée dans {os.path.abspath("LUT.txt")}\n")
+else:
+    print("...skipped")
 #####################################################################
 #       Generate the M3U playlists + folder structure               #
 #####################################################################
@@ -255,14 +258,15 @@ def walk_folder(path: Path, parent_persistent_id = None):
         itemID += 1
         walk_folder (os.path.join(path, folder), playlist['Playlist Persistent ID'])
 
-walk_folder (playlistRootPath)
+if STEP_3:
+    walk_folder (playlistRootPath)
 
-if playlists:
-    pl['Playlists'] = playlists
-##########################################
+    if playlists:
+        pl['Playlists'] = playlists
+    ##########################################
 
-with open(cleaniTunesLibrary, "w", encoding='utf-8') as f:
-    f.write(plistlib.dumps(pl, sort_keys=False).decode())
+    with open(cleaniTunesLibrary, "w", encoding='utf-8') as f:
+        f.write(plistlib.dumps(pl, sort_keys=False).decode())
 
 ###############################################
 #           Sanity check                      #
