@@ -6,80 +6,54 @@ from pathlib import Path
 # Configuration
 iTunesSourceLibrary = "F:/iTunes/iTunes Library (original).xml"
 iTunesFixedLibrary = "F:/iTunes/iTunes Library (clean).xml"
-iTunesMusicSubFolders = ["iTunes", "iTunes%20Media", "Music", "iTunes%20Music", 
-                         "Albums%20MP3", "Amazon%20MP3", "MP"]
+iTunesMusicSubFolders = ["iTunes", "iTunes Media", "Music", "iTunes Music", 
+                         "Albums MP3", "Amazon MP3", "MP"]
 iTunesSourceRootPath = "P:/Musique/iTunes"
 iTunesDestRootPath = "C:/Users/berna/Music/iTunes/Music"
-#iTunesDestRootPath = "F:/Music"
 iTunesCheckPath = "F:/Music"
-
-# def fix_music_path(original_path):
-#     """
-#     Fix the music path by:
-#     1. Replacing the source root with destination root
-#     2. Removing any subfolder from iTunesMusicSubFolders that appears after the root
-#     """
-#     # Handle file:// URLs
-#     if original_path.startswith('file://'):
-#         # Parse and decode the URL
-#         parsed = urlparse(original_path)
-#         decoded_path = unquote(parsed.path)
-#         # Remove leading slash on Windows paths
-#         if decoded_path.startswith('/') and ':' in decoded_path:
-#             decoded_path = decoded_path[1:]
-#     else:
-#         decoded_path = original_path
-    
-#     # Normalize path separators
-#     decoded_path = decoded_path.replace('/', os.sep).replace('\\', os.sep)
-#     source_root = iTunesSourceRootPath.replace('/', os.sep).replace('\\', os.sep)
-    
-#     # Check if path starts with source root
-#     if not decoded_path.startswith(source_root):
-#         return original_path  # Return unchanged if not matching
-    
-#     # Get the relative path after the source root
-#     relative_path = decoded_path[len(source_root):].lstrip(os.sep)
-    
-#     # Split the relative path into parts
-#     parts = relative_path.split(os.sep)
-    
-#     # Remove any parts that match iTunesMusicSubFolders
-#     filtered_parts = [p for p in parts if p not in iTunesMusicSubFolders]
-    
-#     # Reconstruct the path with destination root
-#     new_relative = os.sep.join(filtered_parts)
-#     new_path = os.path.join(iTunesDestRootPath, new_relative)
-    
-#     # Convert back to file:// URL format if original was a URL
-#     if original_path.startswith('file://'):
-#         new_path = 'file://localhost/' + new_path.replace(os.sep, '/')
-    
-#     return new_path
+MusicReferencePath = "P:/iTunes"
 
 def fix_music_path(original_path):
-    
-    if original_path.startswith('file://localhost/'):
-        decoded_path = original_path[len('file://localhost/'):]
+    """
+    Fix the music path by:
+    1. Replacing the source root with destination root
+    2. Removing any subfolder from iTunesMusicSubFolders that appears after the root
+    """
+    # Handle file:// URLs
+    if original_path.startswith('file://'):
+        # Parse and decode the URL
+        parsed = urlparse(original_path)
+        decoded_path = unquote(parsed.path)
+        # Remove leading slash on Windows paths
+        if decoded_path.startswith('/') and ':' in decoded_path:
+            decoded_path = decoded_path[1:]
     else:
         decoded_path = original_path
-
-    if not decoded_path.startswith(iTunesSourceRootPath):
+    
+    # Normalize path separators
+    decoded_path = decoded_path.replace('/', os.sep).replace('\\', os.sep)
+    source_root = iTunesSourceRootPath.replace('/', os.sep).replace('\\', os.sep)
+    
+    # Check if path starts with source root
+    if not decoded_path.startswith(source_root):
         return original_path  # Return unchanged if not matching
     
-    tail = decoded_path[len(iTunesSourceRootPath):]
-
+    # Get the relative path after the source root
+    relative_path = decoded_path[len(source_root):].lstrip(os.sep)
+    
     # Split the relative path into parts
-    parts = tail.split('/')
+    parts = relative_path.split(os.sep)
     
     # Remove any parts that match iTunesMusicSubFolders
     filtered_parts = [p for p in parts if p not in iTunesMusicSubFolders]
-
-    new_tail = iTunesDestRootPath + '/'.join(filtered_parts)
-
+    
+    # Reconstruct the path with destination root
+    new_relative = os.sep.join(filtered_parts)
+    new_path = os.path.join(iTunesDestRootPath, new_relative)
+    
     # Convert back to file:// URL format if original was a URL
     if original_path.startswith('file://'):
-        new_path = 'file://localhost/' + new_tail
+        new_path = 'file://localhost/' + new_path.replace(os.sep, '/')
     
     return new_path
 
@@ -133,13 +107,17 @@ def process_itunes_library():
                                         location_elem.text = new_path
                                         paths_fixed += 1
                                         
-                                        check_path = new_path.replace(iTunesDestRootPath, iTunesCheckPath)
+                                        # Check if the new file path exists
+                                        check_path = new_path
                                         if check_path.startswith('file://localhost/'):
                                             check_path = check_path[17:]
-                                        decoded_path = unquote(check_path)
-                                        check_path = decoded_path.replace('/', '\\')                                        # Check if the new file path exists
+                                            # parsed = urlparse(check_path)
+                                            # check_path = unquote(parsed.path)
+                                            # if check_path.startswith('/') and ':' in check_path:
+                                            #     check_path = check_path[1:]
+                                        fake_path = check_path.replace(iTunesDestRootPath, iTunesCheckPath)
                                         
-                                        if not os.path.exists(check_path):
+                                        if not os.path.exists(fake_path):
                                             paths_not_found.append({
                                                 'track': track_name or 'Unknown',
                                                 'path': check_path
